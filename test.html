@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<svg style="position:fixed; left:0; top:0; width:0; height:0">
+        <defs>
+            <filter id="invert-luminance" color-interpolation-filters="linearRGB">
+                <feColorMatrix type="matrix" values="
+                1.000 -1.000 -1.000 0.000 1.000
+               -1.000 1.000 -1.000 0.000 1.000
+               -1.000 -1.000 1.000 0.000 1.000
+                0.000 0.000 0.000 1.000 0.000
+            " />
+            </filter>
+        </defs>
+    </svg>
+
+<svg>
+<filter id="mat" color-interpolation-filters="linearRGB">
+<feColorMatrix values="2 0 0 0 0  0 2 0 0 0  0 0 2 0 0  0 0 0 1 0"></feColorMatrix>
+<feColorMatrix values=".5 0 0 0 0  0 .5 0 0 0  0 0 .5 0 0  0 0 0 1 0"></feColorMatrix>
+</filter>
+
+<filter id="inv" color-interpolation-filters="sRGB">
+<feColorMatrix values=" -1.250 0.000 0.000 0.000 1.125
+                0.000 -1.250 0.000 0.000 1.125
+                0.000 0.000 -1.250 0.000 1.125
+                0.000 0.000 0.000 1.000 0.000
+">
+</feColorMatrix>
+</filter>
+
+<filter id="mat" color-interpolation-filters="sRGB">
+<feColorMatrix values="1 8.326 -1.387 0 0  1.387 1 0 0 0  0 0  0 0  0 0 0 1 0">
+</feColorMatrix>
+</filter>
+
+<filter id="linhuerot" color-interpolation-filters='linearRGB'>
+<feColorMatrix values='-0.5740000000000001 1.43 0.1440000000000001 0 0,0.426 0.42999999999999994 0.14399999999999996 0 0,0.4259999999999999 1.43 -0.8560000000000001 0 0,0 0 0 1 0'>
+</filter>
+
+
+<filter id='generated' color-interpolation-filters='linearRGB'>
+<feColorMatrix in='SourceGraphic' values='-0.5740000000000001 1.43 0.1440000000000001 0 0,0.426 0.42999999999999994 0.14399999999999996 0 0,0.4259999999999999 1.43 -0.8560000000000001 0 0,0 0 0 1 0' result='ef0'>
+</feColorMatrix>
+<feComposite in='ef0' in2='SourceGraphic' operator='arithmetic' k1=0.0 k2=0.8 k3=0.0 k4=0.1 result='ef1'>
+</feComposite>
+</filter>
+
+
+</svg>
+<style>
+.z {
+    filter: url("#linhuerot") url("#linhuerot");
+}
+.a {
+    filter: hue-rotate( 180deg ) hue-rotate( 180deg );
+}
+
+.a img {
+    /*filter: hue-rotate( 90deg );*/
+}
+/*.b{
+   filter:  hue-rotate( 180deg ) hue-rotate( 90deg );
+}*/
+.b img {
+    filter: url("#generated");
+}
+.c{
+filter: hue-rotate(180deg);
+}
+img{
+border:0px;
+padding:0px;
+margin:0px;
+}
+
+</style>
+</head>
+<body>
+<span class=c><img src="./bars2.png"></span><span class=a><img src="./bars2.png"></span><img src="./bars2.png"><span class=z><img src="./bars2.png"></span>
+<span class=b><img src="./bars2.png"></span>
+</body>
+</html>
