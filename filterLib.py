@@ -8,7 +8,12 @@ class Effect():
         self.ref=None
         self.params={}
         self.innerElements=[]
-    def mkFilter(self,params={"id":"generated","color-interpolation-filters":"linearRGB"}):
+    def mkFilter(self,**filterParams):
+        params={"id":"generated",
+                "color-interpolation-filters":"linearRGB", # This is morally right lots of the time, even if it looks worse
+                "x":"0%","y":"0%","width":"100%","height":"100%"} # For the filters I'm considering at the moment,we don't need anything outside the source bounding box.
+        params.update(filterParams)
+
         output=['<filter '+" ".join(k+"="+repr(v) for k,v in params.items())+'>']
         self.render([0],output)
         output.append("</filter>")
@@ -49,6 +54,9 @@ class Effect():
         return ExpressionEffect(0.0,1.0,0.0,0.0,self,None).__mul__(other)
     def __add__(self,other):
         return ExpressionEffect(0.0,1.0,0.0,0.0,self,None).__add__(other)
+    def mkSVG(self,*args,**kwargs):
+        f = self.mkFilter(*args,**kwargs)
+        return "<svg xmlns='http://www.w3.org/2000/svg'><defs>"+f+"</defs></svg>"
 
 
 
@@ -102,7 +110,8 @@ class MatrixEffect(Effect):
 
 class ExpressionEffect(Effect):
     """A balance between trying to be clever so that avoidable clipping doesn't happen
-       and trying not to be too clever so that clipping happens predictably"""
+       and trying not to be too clever so that clipping happens predictably
+       Warning: watch out for the alpha channel. I'm not sure where premultiplied alpha kicks in"""
     def __init__(self,k1,k2,k3,k4,in1,in2):
         super().__init__("feComposite")
         self.params["operator"] = "arithmetic"

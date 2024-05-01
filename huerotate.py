@@ -50,5 +50,5 @@ anim = ";".join( matToValues(np.array(getmat(i*np.pi*2/12))) for i in range(12+1
 #filtr.addInner(
 #    f'<animate attributeName="values" values={repr(anim)} dur=10s repeatCount="indefinite" />')
 
-print((filtr*.8+.1+0*sourceGraphic).mkFilter())
+print((filtr*.8+.1+0*sourceGraphic).mkSVG())
 
