@@ -1,5 +1,8 @@
 #import numpy
 
+def paramsToString(params):
+    return " ".join(k+f"='{v}'" for k,v in params.items())
+
 class Effect():
     """Filter effects"""
     rendering=False
@@ -8,13 +11,17 @@ class Effect():
         self.ref=None
         self.params={}
         self.innerElements=[]
+        self.clon=None
+    def mkSVG(self,*args,**kwargs):
+        f = self.mkFilter(*args,**kwargs)
+        return "<svg xmlns='http://www.w3.org/2000/svg'><defs>"+f+"</defs></svg>"
     def mkFilter(self,**filterParams):
         params={"id":"generated",
                 "color-interpolation-filters":"linearRGB", # This is morally right lots of the time, even if it looks worse
                 "x":"0%","y":"0%","width":"100%","height":"100%"} # For the filters I'm considering at the moment,we don't need anything outside the source bounding box.
         params.update(filterParams)
 
-        output=['<filter '+" ".join(k+"="+repr(v) for k,v in params.items())+'>']
+        output=['<filter '+paramsToString(params)+'>']
         self.render([0],output)
         output.append("</filter>")
         self.resetRef()
@@ -29,7 +36,7 @@ class Effect():
         params.update(self.params)
         self.ref="ef"+str(counter[0])
         params["result"]=self.ref
-        output.append(f'<{self.elementName} {" ".join(k+"="+repr(v) for k,v in params.items())}>')
+        output.append(f'<{self.elementName} {paramsToString(params)}>')
         for line in self.innerElements:
             output.append(line)
         output.append(f'</{self.elementName}>')
@@ -54,9 +61,28 @@ class Effect():
         return ExpressionEffect(0.0,1.0,0.0,0.0,self,None).__mul__(other)
     def __add__(self,other):
         return ExpressionEffect(0.0,1.0,0.0,0.0,self,None).__add__(other)
-    def mkSVG(self,*args,**kwargs):
-        f = self.mkFilter(*args,**kwargs)
-        return "<svg xmlns='http://www.w3.org/2000/svg'><defs>"+f+"</defs></svg>"
+    def __str__(self):
+        return f"<{self.__class__.__name__}({','.join(str(x) for x in self.inputs)})>"
+    def then(self,other):
+        """Combine 2 Effects (does not intelligently combine expressions"""
+        return other.compose(self)
+    def compose(self,other,top=True):
+        """apply self to other (replace sourceGraphic with other inside self) """
+        abstract
+    def _start_compose(self,other):
+        if self.ref is not None:
+            return self.ref
+        if self.rendering:
+            raise Exception("Loop of effect dependencies")
+        self.rendering=True
+        return [x.compose(other,False) for x in self.inputs]
+
+    def _end_compose(self,top,result):
+        self.rendering=False
+        self.ref=result
+        if top:
+            self.resetRef()
+        return result
 
 
 
@@ -70,6 +96,12 @@ class SourceGraphic(Effect):
         return "SourceGraphic"
     def resetRef(self):
         pass
+    def __str__(self):
+        return f"<{self.__class__.__name__}>"
+    def then(self,other):
+        return other
+    def compose(self,other,top=True):
+        return other
 
 sourceGraphic=SourceGraphic()
 
@@ -107,11 +139,15 @@ class MatrixEffect(Effect):
         self.matrix = extend(matrix)
         #self.params["type"]="matrix" this is the initial value
         self.params["values"]=matToValues(self.matrix)
+    def compose(self,other,top=True):
+        inps = self._start_compose(other)
+        return self._end_compose(top,MatrixEffect(self.matrix,*inps))
+
 
 class ExpressionEffect(Effect):
     """A balance between trying to be clever so that avoidable clipping doesn't happen
        and trying not to be too clever so that clipping happens predictably
-       Warning: watch out for the alpha channel. I'm not sure where premultiplied alpha kicks in"""
+       Warning: watch out for the alpha channel. This uses pre-multiplied alpha,"""
     def __init__(self,k1,k2,k3,k4,in1,in2):
         super().__init__("feComposite")
         self.params["operator"] = "arithmetic"
@@ -139,16 +175,22 @@ class ExpressionEffect(Effect):
                 (k1,k2,k3,k4) = self.ks
                 (o1,o2,o3,o4) = other.ks
                 return ExpressionEffect(k1+o1,k2+o3,k3+o2,k4+o4,
-                                        self.inputs[0], self.inputs[1] or other.inputs[0] )
+                                        self.inputs[0], self.inputs[1] or other.inputs[0])
+            elif other.inputs[1] is None:
+                (k1,k2,k3,k4) = other.ks
+                return ExpressionEffect(0.0 ,1.0, k2, k4 ,self, other.inputs[0])
+        if isinstance(other,Effect):
+            if self.inputs[0] is other:
+                (k1,k2,k3,k4) = self.ks
+                return ExpressionEffect(k1, k2+1, k3, k4 ,*self.inputs)
+            elif self.inputs[1] is other:
+                (k1,k2,k3,k4) = self.ks
+                return ExpressionEffect(k1, k2, k3+1, k4 ,*self.inputs)
+            elif self.inputs[1] is None:
+                (k1,k2,k3,k4) = self.ks
+                return ExpressionEffect(0.0 ,k2, 1.0, k4 ,self.inputs[0], other)
             else:
-                if self.inputs[1] is None:
-                    (k1,k2,k3,k4) = self.ks
-                    return ExpressionEffect(0.0 ,k2, 1.0, k4 ,self.inputs[0], other)
-                elif other.inputs[1] is None:
-                    (k1,k2,k3,k4) = other.ks
-                    return ExpressionEffect(0.0 ,1.0, k2, k4 ,self, other.inputs[0])
-                else:
-                    return ExpressionEffect(0.0,1.0,1.0,0.0,self,other)
+                return ExpressionEffect(0.0,1.0,1.0,0.0,self,other)
         else:
             return NotImplemented
     def __mul__(self, other):
@@ -161,14 +203,144 @@ class ExpressionEffect(Effect):
                 (k1,k2,k3,k4) = self.ks
                 (o1,o2,o3,o4) = other.ks
                 return ExpressionEffect(k2*o2, k2*o4, k4*o2, k4*o4, self.inputs[0], other.inputs[0])
-            elif self.inputs[1] is None:
-                (k1,k2,k3,k4) = self.ks
-                return ExpressionEffect(k2, k2, k4, k4, self.inputs[0], other)
             elif other.inputs[1] is None:
                 (o1,o2,o3,o4) = other.ks
                 return ExpressionEffect(o2, o4, o2, o4, self, other.inputs[0])
+        if isinstance(other,Effect):
+            if self.inputs[1] is None:
+                (k1,k2,k3,k4) = self.ks
+                return ExpressionEffect(k2, k2, k4, k4, self.inputs[0], other)
             else:
                 return ExpressionEffect(1.0, 0.0, 0.0, 0.0, self, other)
         else:
             return NotImplemented
+    def __str__(self):
+        return f"<{self.__class__.__name__}({','.join(str(x) for x in self.inputs)})>"
+    def compose(self,other,top=True):
+        inps = self._start_compose(other)
+        return self._end_compose(top,ExpressionEffect(*self.ks,*inps))
+
+class ComponentEffect(Effect):
+    """Warning: uses premultiplied alpha"""
+    def __init__(self,in1,*components):
+        super().__init__("feComponentTransfer")
+        self.inputs=[in1]
+        self.components=tuple(str(c) for c in components)
+        assert len(components)<=4
+        for channel,component in zip("RGBA",components):
+            self.addInner(f"<feFunc{channel} {component} />")
+    def compose(self,other,top=True):
+        inps = self._start_compose(other)
+        return self._end_compose(top,ComponentEffect(*inps,*self.components))
+
+
+class Gamma():
+    def __init__(self,amplitude,exponent,offset):
+        self.amplitude = amplitude
+        self.exponent = exponent
+        self.offset = offset
+    def __str__(self):
+        return comGamma(self.amplitude,self.exponent,self.offset)
+    def __pow__(self,exp):
+        assert self.offset==0.0
+        return Gamma(self.amplitude**(exp),self.exponent*exp,0.)
+    def __mul__(self,other):
+        if isinstance(other,int):
+            other=float(other)
+        if isinstance(other,float):
+            return Gamma(self.amplitude*other,self.exponent,self.offset*other)
+        return NotImplemented
+    def __add__(self,other):
+        if isinstance(other,int):
+            other=float(other)
+        if isinstance(other,float):
+            return Gamma(self.amplitude,self.exponent,self.offset+other)
+        return NotImplemented
+    def __radd__(self,other):
+        return self.__add__(other)
+    def __rmul__(self,other):
+        return self.__mul__(other)
+    def __truediv__(self,other):
+        return self.__mul__(1.0/other)
+    def __rtruediv__(self,other):
+        if isinstance(other,int):
+            other=float(other)
+        if isinstance(other,float):
+            return other*(self**(-1))
+
+γ = Gamma(1.,1.,0.)
+
+def comGamma(amplitude,exponent,offset):
+    return " ".join(["type='gamma'"]+[f"{a}='{b}'" for a,b in locals().items()])
+
+def comTable(tableValues):
+    return "type='table' tableValues="+ repr(" ".join(map(str,tableValues)))
+
+def comDiscrete(tableValues):
+    return "type='discrete' tableValues="+ repr(" ".join(map(str,tableValues)))
+
+def comLinear(slope,intercept):
+    return " ".join(["type='linear'"]+[f"{a}='{b}'" for a,b in locals().items()])
+
+def comId():
+    return "type='linear'"
+
+
+class FloodEffect(Effect):
+    def __init__(self,color):
+        super().__init__("feFlood")
+        self.inputs=[]
+        self.params["flood-color"]=color
+    def compose(self,other,top=True):
+        return self
+
+
+
+def divideGamma(dividend,blueDivisor,limit=0.1):
+    """Divide the red and green components of the dividend by the blue component of the divisor"""
+    return ((ComponentEffect(blueDivisor,comLinear(0,0),comLinear(0,0), limit/γ,comLinear(0,1))
+      + dividend).matmul(
+        [[1.,0.,0.,0.,0.],
+         [0.,1.,0.,0.,0.],
+         [0.,0.,0.,0.,0.],
+         [0.,0.,1.,0.,0.],
+            ]) + floodEffect("#000000FF")).matmul(
+               [[1/limit,0.,0.,0.,0.],
+                [0.,1./limit,0.,0.,0.],
+                [0.,0.,1.,0.,0.],
+                [0.,0.,0.,0.,1.],
+                    ]
+                )
+
+def divideGammaAlt(dividend,redDivisor,limit=0.1):
+    """Divide the color components of the dividend by the red component of the divisor"""
+    return ComponentEffect(redDivisor, limit/γ).matmul(
+        [[1.,0.,0.,0.,0.],
+         [1.,0.,0.,0.,0.],
+         [1.,0.,0.,0.,0.],
+         [0.,0.,0.,0.,1.],
+            ])*dividend
+
+
+def divideAlpha(dividend,redDivisor,limit=0.1):
+    scaledDown = ComponentEffect(dividend, comId(),comId(),comId(),comLinear(0.,limit))
+    divAlpha = redDivisor.matmul(
+        [[0.,0.,0.,0.,0.],
+         [0.,0.,0.,0.,0.],
+         [0.,0.,0.,0.,0.],
+         [1.,0.,0.,0.,-limit]])
+    return (scaledDown + divAlpha).matmul(
+               [[1.,0.,0.,0.,0.],
+                [0.,1.,0.,0.,0.],
+                [0.,0.,1.,0.,0.],
+                [0.,0.,0.,0.,1.]])
+def divideAlpha2(dividend,redDivisor,limit=0.1):
+    scaledDown = ComponentEffect(dividend, comId(),comId(),comId(),comLinear(0.,limit))
+    divAlpha = redDivisor.matmul(
+        [[0.,0.,0.,0.,0.],
+         [0.,0.,0.,0.,0.],
+         [0.,0.,0.,0.,0.],
+         [1.,0.,0.,0.,-limit]])
+    return scaledDown + divAlpha + FloodEffect("#000000FF")
+
 
