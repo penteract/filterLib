@@ -2,7 +2,7 @@ import math
 import sys
 
 w=0x100
-h=0x10
+h=0x100
 
 header=f"""
 42 4d 36 {hex((w*h*3)//256)[-2:]} 00 00 00 00 00 00 36 00 00 00 28 00
@@ -32,10 +32,13 @@ def g(x,y):
   return x
 
 def r(x,y):
-  return x
+  return y
 
 def b(x,y):
-  return 0
+  return ((x*16)%256)+ y%16
 
-sys.stdout.buffer.write(hdr + bytes(int((g(x,y) if c==1 else r(x,y) if c==2 else b(x,y))) for y in range(h) for x in range(w) for c in range(psz)))
+k=10
+sys.stdout.buffer.write(hdr + bytes(int((g(x,y) if c==1 else r(x,y) if c==2 else b(x,y))) for α in range(h) for β in range(w) for c in range(psz) for (x,y) in [(int(β/k+128-128/k), int(α/k+128- 128/k))] ))
+
+#[(β,α)]))#
 

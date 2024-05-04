@@ -1,6 +1,4 @@
 <svg xmlns='http://www.w3.org/2000/svg'><defs><filter id='generated' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
 <feColorMatrix in='SourceGraphic' values='0.0 1.0 0.0 0.0 0.0,-2550.1 2549.9 -0.1 -0.1 -0.1,0.9 2550.9 -2549.1 0.9 0.9,0 0 0 1 0' result='ef0'>
 </feColorMatrix>
-<feColorMatrix in='ef0' values='1.0 1.0 1.0 0.0 -2.0,1.0 -1.0 -1.0 0.0 1.0,1.0 -1.0 -1.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef1'>
-</feColorMatrix>
 </filter></defs></svg>

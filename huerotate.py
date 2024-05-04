@@ -58,36 +58,60 @@ b=np.array([0.,0.,1.,0.,0.])
 a=np.array([0.,0.,0.,1.,0.])
 u=np.array([0.,0.,0.,0.,1.])
 
-k = 512
+
+steps = 255
+k = 2550
+add = 0.9 #(k/steps - 0.1)
+sub = 0.1 #(k/steps)-add
 
 #Behold the sorting algorithm!
-rDiff = sourceGraphic.matmul([r,k*(r-g)+.99,k*(r-b)+.99])
-gDiff = sourceGraphic.matmul([g,k*(g-r)-.01,k*(g-b)+.99])
-bDiff = sourceGraphic.matmul([b,k*(b-r)-.01,k*(b-g)-.01])
+rDiff = sourceGraphic.matmul([r,k*(r-g)+add,k*(r-b)+add])
+gDiff = sourceGraphic.matmul([g,k*(g-r)-sub,k*(g-b)+add])
+bDiff = sourceGraphic.matmul([b,k*(b-r)-sub,k*(b-g)-sub])
 
 uu = u*(255/256)
 # these vectors look like [max or 0, 0 or mid or 1, min or 0]
 # sometimes off by 3/256 and I'm not sure why.
+half = 0.5 #129/255
+
+#diffToParts =
+
 rParts,gParts,bParts = [x.matmul([r+g+b-2*u, r-g-b+u,r-b-g , u]) for x in [rDiff,gDiff,bDiff]]
-maxmidmin = (rParts*0.5 + gParts*0.5) + bParts*0.5 # mid is in the interval [0.5,1]
+maxmidmin = (rParts*half + gParts*half) + bParts*half # mid is in the interval [0.5,1]
 #end of sorting algorithm
 
-
+#gParts=rParts
 #We want (mid - min) / (max-min)
 numer = 2*((g-.5)-b)
 denom = 2*(r-b)
-d1 = maxmidmin.matmul([numer, (numer+denom)/2, (2*denom-numer)/2] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
-div = maxmidmin.matmul([denom,denom,denom] + [u])
-h = divideBlend(d1, div)
+three = 3
+d1 = maxmidmin.matmul([numer, 0*u, 0*u] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
+#d1 = maxmidmin.matmul([numer, (numer+denom)/three, (2*denom-numer)/three] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
+
+
+    #divideBlend(d1, div)
+div = maxmidmin.matmul([u-denom,u-denom,u-denom] + [u])
+h = BlendEffect("color-dodge", div, d1)
 
 lum = (r+g+b)/3
 
 #lumMat = np.array([(r+g+b)/3,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
-lumParts = sourceGraphic.matmul([lum,(3*lum)/2,(3*lum)/2,u])
 #print(maxmidmin.matmul([2*r,2*(g)-u,2*b]).mkSVG())
 #print(gParts.mkSVG())
+maxmidminPretty = maxmidmin.matmul([r/half,(g-u*half)/half,b/half])
 
-maxmidminPretty = maxmidmin.matmul([2*r,2*(g)-u,2*b])
+# There are a few options for how to do the next bit.
+# What we want is f(3l,1-h)/f(3l,h) where f(x,y) = x/(y+1) if x<y else (3-x)/(2-y)
+# this can be simplifiied into:
+# (h+1)/(2-h) if 3l < min(h+1,2-h)
+# (2-h)/(h+1) if 3l > max(h+1,2-h)
+# (1-l)/l if h+1>3l>2-h
+# l/(1-l) if 2-h>3l>h+1
+
+lumParts = sourceGraphic.matmul([lum,(3*lum)/three,(3*lum)/three,u])
+
+
+
 
 if __name__ == "__main__":
     import sys
