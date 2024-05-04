@@ -1,0 +1,198 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<!-- ======== Test : colorMatrix ======== -->
+<filter id='colorMatrix' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feColorMatrix in='SourceGraphic' values='-0.5740000000000001 1.43 0.1440000000000001 0 0,0.426 0.42999999999999994 0.14399999999999996 0 0,0.4259999999999999 1.43 -0.8560000000000001 0 0,0 0 0 1 0' result='ef0'>
+</feColorMatrix>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test colorMatrix  ======== -->
+<!-- ======== Test : simpleExpression ======== -->
+<filter id='simpleExpression' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feComposite in='SourceGraphic' in2='SourceGraphic' operator='arithmetic' k1='1.0' k2='1.0' k3='0.0' k4='0.0' result='ef0'>
+</feComposite>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test simpleExpression  ======== -->
+<!-- ======== Test : combiningExpression ======== -->
+<filter id='combiningExpression' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feComposite in='SourceGraphic' in2='SourceGraphic' operator='arithmetic' k1='4.0' k2='9.0' k3='0.0' k4='0.1' result='ef0'>
+</feComposite>
+<feComposite in='ef0' in2='SourceGraphic' operator='arithmetic' k1='1.0' k2='0.0' k3='0.0' k4='0.2' result='ef1'>
+</feComposite>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test combiningExpression  ======== -->
+<!-- ======== Test : componentTransfer ======== -->
+<filter id='componentTransfer' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feComponentTransfer in='SourceGraphic' result='ef0'>
+<feFuncR type='gamma' amplitude='1' exponent='-1' offset='-1' />
+<feFuncG type='discrete' tableValues='0 0.5 1' />
+</feComponentTransfer>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test componentTransfer  ======== -->
+<!-- ======== Test : composedComponentsDivision ======== -->
+<filter id='composedComponentsDivision' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feComponentTransfer in='SourceGraphic' result='ef0'>
+<feFuncR type='gamma' amplitude='0.5' exponent='1' offset='0.5' />
+<feFuncG type='gamma' amplitude='0' exponent='1' offset='0' />
+</feComponentTransfer>
+<feComponentTransfer in='ef0' result='ef1'>
+<feFuncR type='gamma' amplitude='1' exponent='-1' offset='-1' />
+</feComponentTransfer>
+<feComponentTransfer in='ef1' result='ef2'>
+<feFuncR type='discrete' tableValues='0 0.3 0.6 1.0' />
+</feComponentTransfer>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test composedComponentsDivision  ======== -->
+<!-- ======== Test : flood ======== -->
+<filter id='flood' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feFlood flood-color='#F0F8' result='ef0'>
+</feFlood>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test flood  ======== -->
+<!-- ======== Test : alphaDivision ======== -->
+<filter id='alphaDivision' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feColorMatrix in='SourceGraphic' values='0.0 0.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 0.0,0.5 0.0 0.0 0.0 0.0' result='ef0'>
+</feColorMatrix>
+<feFlood flood-color='#FF00007F' result='ef1'>
+</feFlood>
+<feComposite in='ef0' in2='ef1' operator='arithmetic' k1='0.0' k2='1.0' k3='1.0' k4='0.0' result='ef2'>
+</feComposite>
+<feColorMatrix in='ef2' values='2.0 0.0 0.0 0.0 -1.0,0.0 0.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef3'>
+</feColorMatrix>
+<feComponentTransfer in='ef3' result='ef4'>
+<feFuncR type='discrete' tableValues='0 0.3 0.6 1.0' />
+</feComponentTransfer>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test alphaDivision  ======== -->
+<!-- ======== Test : libDivGamma ======== -->
+<filter id='libDivGamma' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feColorMatrix in='SourceGraphic' values='0 0 0 0 0,0 0 0 0 0,0.5 0 0 0 0.5,0 0 0 1 0' result='ef0'>
+</feColorMatrix>
+<feComponentTransfer in='ef0' result='ef1'>
+<feFuncR type='linear' slope='0' intercept='0' />
+<feFuncG type='linear' slope='0' intercept='0' />
+<feFuncB type='gamma' amplitude='0.5' exponent='-1.0' offset='0.0' />
+<feFuncA type='linear' slope='0' intercept='1' />
+</feComponentTransfer>
+<feFlood flood-color='#FF0000' result='ef2'>
+</feFlood>
+<feComposite in='ef1' in2='ef2' operator='arithmetic' k1='0.0' k2='1.0' k3='1.0' k4='0.0' result='ef3'>
+</feComposite>
+<feColorMatrix in='ef3' values='1.0 0.0 0.0 0.0 0.0,0.0 1.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 0.0,0.0 0.0 1.0 0.0 0.0' result='ef4'>
+</feColorMatrix>
+<feFlood flood-color='#000000FF' result='ef5'>
+</feFlood>
+<feComposite in='ef4' in2='ef5' operator='arithmetic' k1='0.0' k2='2.0' k3='2.0' k4='-1.0' result='ef6'>
+</feComposite>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test libDivGamma  ======== -->
+<!-- ======== Test : libDivGamma_discrete ======== -->
+<filter id='libDivGamma_discrete' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feColorMatrix in='SourceGraphic' values='0 0 0 0 0,0 0 0 0 0,0.5 0 0 0 0.5,0 0 0 1 0' result='ef0'>
+</feColorMatrix>
+<feComponentTransfer in='ef0' result='ef1'>
+<feFuncR type='linear' slope='0' intercept='0' />
+<feFuncG type='linear' slope='0' intercept='0' />
+<feFuncB type='gamma' amplitude='0.5' exponent='-1.0' offset='0.0' />
+<feFuncA type='linear' slope='0' intercept='1' />
+</feComponentTransfer>
+<feFlood flood-color='#FF0000' result='ef2'>
+</feFlood>
+<feComposite in='ef1' in2='ef2' operator='arithmetic' k1='0.0' k2='1.0' k3='1.0' k4='0.0' result='ef3'>
+</feComposite>
+<feColorMatrix in='ef3' values='1.0 0.0 0.0 0.0 0.0,0.0 1.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 0.0,0.0 0.0 1.0 0.0 0.0' result='ef4'>
+</feColorMatrix>
+<feFlood flood-color='#000000FF' result='ef5'>
+</feFlood>
+<feComposite in='ef4' in2='ef5' operator='arithmetic' k1='0.0' k2='2.0' k3='2.0' k4='-1.0' result='ef6'>
+</feComposite>
+<feComponentTransfer in='ef6' result='ef7'>
+<feFuncR type='discrete' tableValues='0 0.3 0.6 1.0' />
+</feComponentTransfer>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test libDivGamma_discrete  ======== -->
+<!-- ======== Test : libDiv2 ======== -->
+<filter id='libDiv2' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feColorMatrix in='SourceGraphic' values='0.5 0 0 0 0.5,0 1 0 0 0,0 0 1 0 0,0 0 0 1 0' result='ef0'>
+</feColorMatrix>
+<feComponentTransfer in='ef0' result='ef1'>
+<feFuncR type='linear' slope='-1.0' intercept='1.0' />
+<feFuncG type='linear' slope='-1.0' intercept='1.0' />
+<feFuncB type='linear' slope='-1.0' intercept='1.0' />
+<feFuncA type='identity' />
+</feComponentTransfer>
+<feFlood flood-color='#7F0000FF' result='ef2'>
+</feFlood>
+<feBlend in='ef1' in2='ef2' mode='color-dodge' result='ef3'>
+</feBlend>
+<feComponentTransfer in='ef3' result='ef4'>
+<feFuncR type='linear' slope='2.0' intercept='-1.0' />
+<feFuncG type='linear' slope='2.0' intercept='-1.0' />
+<feFuncB type='linear' slope='2.0' intercept='-1.0' />
+<feFuncA type='linear' slope='2.0' intercept='-1.0' />
+</feComponentTransfer>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test libDiv2  ======== -->
+<!-- ======== Test : libDiv2_discrete ======== -->
+<filter id='libDiv2_discrete' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
+<feColorMatrix in='SourceGraphic' values='0.5 0 0 0 0.5,0 1 0 0 0,0 0 1 0 0,0 0 0 1 0' result='ef0'>
+</feColorMatrix>
+<feComponentTransfer in='ef0' result='ef1'>
+<feFuncR type='linear' slope='-1.0' intercept='1.0' />
+<feFuncG type='linear' slope='-1.0' intercept='1.0' />
+<feFuncB type='linear' slope='-1.0' intercept='1.0' />
+<feFuncA type='identity' />
+</feComponentTransfer>
+<feFlood flood-color='#7F0000FF' result='ef2'>
+</feFlood>
+<feBlend in='ef1' in2='ef2' mode='color-dodge' result='ef3'>
+</feBlend>
+<feComponentTransfer in='ef3' result='ef4'>
+<feFuncR type='linear' slope='2.0' intercept='-1.0' />
+<feFuncG type='linear' slope='2.0' intercept='-1.0' />
+<feFuncB type='linear' slope='2.0' intercept='-1.0' />
+<feFuncA type='linear' slope='2.0' intercept='-1.0' />
+</feComponentTransfer>
+<feComponentTransfer in='ef4' result='ef5'>
+<feFuncR type='discrete' tableValues='0 0.3 0.6 1.0' />
+</feComponentTransfer>
+</filter>
+<!-- No Exceptions -->
+<!-- ======== end of Test libDiv2_discrete  ======== -->
+<image x='0' y='0' href='./tst.bmp'/>
+<text x='256' y='14'> Unfiltered </text>
+<image x='0' y='16' href='./tst.bmp' filter='url(#colorMatrix)'/>
+<text x='256' y='30'> colorMatrix </text>
+<image x='0' y='32' href='./tst.bmp' filter='url(#simpleExpression)'/>
+<text x='256' y='46'> simpleExpression </text>
+<image x='0' y='48' href='./tst.bmp' filter='url(#combiningExpression)'/>
+<text x='256' y='62'> combiningExpression </text>
+<image x='0' y='64' href='./tst.bmp' filter='url(#componentTransfer)'/>
+<text x='256' y='78'> componentTransfer </text>
+<image x='0' y='80' href='./tst.bmp' filter='url(#composedComponentsDivision)'/>
+<text x='256' y='94'> composedComponentsDivision </text>
+<image x='0' y='96' href='./tst.bmp' filter='url(#flood)'/>
+<text x='256' y='110'> flood </text>
+<image x='0' y='112' href='./tst.bmp' filter='url(#alphaDivision)'/>
+<text x='256' y='126'> alphaDivision </text>
+<image x='0' y='128' href='./tst.bmp' filter='url(#libDivGamma)'/>
+<text x='256' y='142'> libDivGamma </text>
+<image x='0' y='144' href='./tst.bmp' filter='url(#libDivGamma_discrete)'/>
+<text x='256' y='158'> libDivGamma_discrete </text>
+<rect x='84.83333333333333' y='136' width='1' height='16' fill='#0f7'/>
+<image x='0' y='160' href='./tst.bmp' filter='url(#libDiv2)'/>
+<text x='256' y='174'> libDiv2 </text>
+<image x='0' y='176' href='./tst.bmp' filter='url(#libDiv2_discrete)'/>
+<text x='256' y='190'> libDiv2_discrete </text>
+<rect x='84.83333333333333' y='168' width='1' height='16' fill='#0f7'/>
+<rect x='84.83333333333333' y='72' width='1' height='16' fill='#0f7'/>
+<rect x='84.83333333333333' y='104' width='1' height='16' fill='#0f7'/>
+</svg>

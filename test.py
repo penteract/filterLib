@@ -1,21 +1,22 @@
-import traceback
+import traceback,sys
 
 cases=[]
 
-def test(testCase):
-    print("<!-- ======== Test :",testCase.__name__,"======== -->")
+def test(testCase,name=None):
+    if name is None: name=testCase.__name__
+    print("<!-- ======== Test :",name,"======== -->")
     try:
-        result = testCase().mkFilter(id=testCase.__name__, **{"color-interpolation-filters":"sRGB"})
+        result = testCase().mkFilter(id=name, **{"color-interpolation-filters":"sRGB"})
         # results are easier to see in the sRGB color space
         print(result)
     except Exception as e:
         print("<!--")
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stdout)
         print("-->")
     else:
-        cases.append(testCase.__name__)
+        cases.append(name)
         print("<!-- No Exceptions -->")
-    print("<!-- ======== end of Test",testCase.__name__," ======== -->")
+    print("<!-- ======== end of Test",name," ======== -->")
     return None
 
 import filterLib
@@ -113,6 +114,19 @@ def alphaDivision():
     c = ComponentEffect(m2,cr3)
     return c
 
+def test2(fn):
+    name = fn.__name__
+    test(fn)
+    cr3 = comDiscrete([0,.3,.6,1.])
+    test(lambda:ComponentEffect(fn(),cr3),name+"_discrete")
+@test2
+def libDivGamma():
+    transformed = sourceGraphic.matmul([[0]*3]*2+[[.5,0,0,0,.5]] )
+    return divideGamma(FloodEffect("#FF0000") , transformed,limit=0.5)*2-1
+@test2
+def libDiv2():
+    transformed = sourceGraphic.matmul([[.5,0,0,0,.5]] )
+    return divideBlend(FloodEffect("#7F0000FF") , transformed)*2-1
 
 #print("</defs>")
 #print("<rect x='0' y='0' width='100' height='100' />")
@@ -121,6 +135,9 @@ print("<text x='256' y='14'> Unfiltered </text>")
 for i,name in enumerate(cases):
     print(f"<image x='0' y='{(i+1)*16}' href='./tst.bmp' filter='url(#{name})'/>")
     print(f"<text x='256' y='{(i+2)*16-2}'> {name} </text>")
+    if "_discrete" in name:
+        print(f"<rect x='{256/3-0.5}' y='{16*(i+2)-24}' width='1' height='16' fill='#0f7'/>")
+
     #print(f"<image x='{i*16}' y='0' href='./tst.bmp' />")
 print(f"<rect x='{256/3-0.5}' y='{16*6-24}' width='1' height='16' fill='#0f7'/>")
 print(f"<rect x='{256/3-0.5}' y='{16*8-24}' width='1' height='16' fill='#0f7'/>")

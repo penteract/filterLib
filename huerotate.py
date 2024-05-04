@@ -50,5 +50,49 @@ anim = ";".join( matToValues(np.array(getmat(i*np.pi*2/12))) for i in range(12+1
 #filtr.addInner(
 #    f'<animate attributeName="values" values={repr(anim)} dur=10s repeatCount="indefinite" />')
 
-print((filtr*sourceGraphic).mkSVG())
+#print((filtr*sourceGraphic).mkSVG())
+
+r=np.array([1.,0.,0.,0.,0.])
+g=np.array([0.,1.,0.,0.,0.])
+b=np.array([0.,0.,1.,0.,0.])
+a=np.array([0.,0.,0.,1.,0.])
+u=np.array([0.,0.,0.,0.,1.])
+
+k = 512
+
+#Behold the sorting algorithm!
+rDiff = sourceGraphic.matmul([r,k*(r-g)+.99,k*(r-b)+.99])
+gDiff = sourceGraphic.matmul([g,k*(g-r)-.01,k*(g-b)+.99])
+bDiff = sourceGraphic.matmul([b,k*(b-r)-.01,k*(b-g)-.01])
+
+uu = u*(255/256)
+# these vectors look like [max or 0, 0 or mid or 1, min or 0]
+# sometimes off by 3/256 and I'm not sure why.
+rParts,gParts,bParts = [x.matmul([r+g+b-2*u, r-g-b+u,r-b-g , u]) for x in [rDiff,gDiff,bDiff]]
+maxmidmin = (rParts*0.5 + gParts*0.5) + bParts*0.5 # mid is in the interval [0.5,1]
+#end of sorting algorithm
+
+
+#We want (mid - min) / (max-min)
+numer = 2*((g-.5)-b)
+denom = 2*(r-b)
+d1 = maxmidmin.matmul([numer, (numer+denom)/2, (2*denom-numer)/2] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
+div = maxmidmin.matmul([denom,denom,denom] + [u])
+h = divideBlend(d1, div)
+
+lum = (r+g+b)/3
+
+#lumMat = np.array([(r+g+b)/3,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
+lumParts = sourceGraphic.matmul([lum,(3*lum)/2,(3*lum)/2,u])
+#print(maxmidmin.matmul([2*r,2*(g)-u,2*b]).mkSVG())
+#print(gParts.mkSVG())
+
+maxmidminPretty = maxmidmin.matmul([2*r,2*(g)-u,2*b])
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv)==2:
+        print(eval(sys.argv[1]).mkSVG())
+    else:
+        print("Usage(testing): python3 huerotate.py 'expr'\n    expr describes a filter\nOutputs an svg with the filter having id='generated'",file=sys.stderr)
 

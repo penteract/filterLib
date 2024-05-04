@@ -17,7 +17,7 @@ class Effect():
         return "<svg xmlns='http://www.w3.org/2000/svg'><defs>"+f+"</defs></svg>"
     def mkFilter(self,**filterParams):
         params={"id":"generated",
-                "color-interpolation-filters":"linearRGB", # This is morally right lots of the time, even if it looks worse
+                "color-interpolation-filters":"sRGB", # This is morally right lots of the time, even if it looks worse
                 "x":"0%","y":"0%","width":"100%","height":"100%"} # For the filters I'm considering at the moment,we don't need anything outside the source bounding box.
         params.update(filterParams)
 
@@ -59,8 +59,14 @@ class Effect():
         return self.__mul__(other)
     def __mul__(self,other):
         return ExpressionEffect(0.0,1.0,0.0,0.0,self,None).__mul__(other)
+    def __truediv__(self,other):
+        return self*(other**(-1))
     def __add__(self,other):
         return ExpressionEffect(0.0,1.0,0.0,0.0,self,None).__add__(other)
+    def __sub__(self,other):
+        return self.__add__((-1)*other)
+    def __rsub__(self,other):
+        return other + ((-1)*self)
     def __str__(self):
         return f"<{self.__class__.__name__}({','.join(str(x) for x in self.inputs)})>"
     def then(self,other):
@@ -159,6 +165,13 @@ class ExpressionEffect(Effect):
         self.ks=(k1,k2,k3,k4)
         if in2 is None:
             assert k1==0.0 and k3==0.0
+            l = comLinear(k2,k4)
+            self.inner = ComponentEffect(in1,l,l,l,l)
+    def render(self,*args,**kwargs):
+        if self.inputs[1] is None:
+            return self.inner.render(*args,**kwargs)
+        else:
+            return super().render(*args,**kwargs)
     def __add__(self,other):
         if isinstance(other,int):
             other=float(other)
@@ -216,9 +229,17 @@ class ExpressionEffect(Effect):
             return NotImplemented
     def __str__(self):
         return f"<{self.__class__.__name__}({','.join(str(x) for x in self.inputs)})>"
-    def compose(self,other,top=True):
-        inps = self._start_compose(other)
-        return self._end_compose(top,ExpressionEffect(*self.ks,*inps))
+    def compose(self,*args,**kwargs):
+        if self.inputs[1] is None:
+            return self.inner.compose(*args,**kwargs)
+        else:
+            inps = self._start_compose(other)
+            return self._end_compose(top,ExpressionEffect(*self.ks,*inps))
+    def resetRef(self,*args,**kwargs):
+        if self.inputs[1] is None:
+            return self.inner.resetRef(*args,**kwargs)
+        else:
+            return super().resetRef(*args,**kwargs)
 
 class ComponentEffect(Effect):
     """Warning: uses premultiplied alpha"""
@@ -283,7 +304,7 @@ def comLinear(slope,intercept):
     return " ".join(["type='linear'"]+[f"{a}='{b}'" for a,b in locals().items()])
 
 def comId():
-    return "type='linear'"
+    return "type='identity'"
 
 
 class FloodEffect(Effect):
@@ -294,7 +315,14 @@ class FloodEffect(Effect):
     def compose(self,other,top=True):
         return self
 
-
+class BlendEffect(Effect):
+    def __init__(self,mode,in1,in2):
+        super().__init__("feBlend")
+        self.inputs=[in1,in2]
+        self.params["mode"]=mode
+    def compose(self,other):
+        inps = self._start_compose(other)
+        return self._end_compose(top,BlendEffect(self.params["mode"],*inps))
 
 def divideGamma(dividend,blueDivisor,limit=0.1):
     """Divide the red and green components of the dividend by the blue component of the divisor"""
@@ -304,13 +332,14 @@ def divideGamma(dividend,blueDivisor,limit=0.1):
          [0.,1.,0.,0.,0.],
          [0.,0.,0.,0.,0.],
          [0.,0.,1.,0.,0.],
-            ]) + floodEffect("#000000FF")).matmul(
+            ]) + FloodEffect("#000000FF"))
+    """ .matmul(
                [[1/limit,0.,0.,0.,0.],
                 [0.,1./limit,0.,0.,0.],
                 [0.,0.,1.,0.,0.],
                 [0.,0.,0.,0.,1.],
                     ]
-                )
+                )"""
 
 def divideGammaAlt(dividend,redDivisor,limit=0.1):
     """Divide the color components of the dividend by the red component of the divisor"""
@@ -341,6 +370,16 @@ def divideAlpha2(dividend,redDivisor,limit=0.1):
          [0.,0.,0.,0.,0.],
          [0.,0.,0.,0.,0.],
          [1.,0.,0.,0.,-limit]])
-    return scaledDown + divAlpha + FloodEffect("#000000FF")
+    return (scaledDown + divAlpha) + FloodEffect("#000000FF")
+
+def divideBlend(dividend,divisor):
+    inv = comLinear(-1.,1.)
+    divisor = ComponentEffect(divisor,inv,inv,inv, comId())
+    return BlendEffect("color-dodge", divisor, dividend)
+
+def preserveAlpha(effect):
+    """Apply the input alpha"""
+    return
+
 
 
