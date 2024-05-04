@@ -61,7 +61,7 @@ u=np.array([0.,0.,0.,0.,1.])
 
 steps = 255
 k = 2550
-add = 0.9 #(k/steps - 0.1)
+add = .9 #(k/steps - 0.1)
 sub = 0.1 #(k/steps)-add
 
 #Behold the sorting algorithm!
