@@ -21,6 +21,6 @@
 </feColorMatrix>
 <feComposite in='ef6' in2='ef9' operator='arithmetic' k1='0.0' k2='1.0' k3='0.5' k4='0.0' result='ef10'>
 </feComposite>
-<feColorMatrix in='ef10' values='0.0 2.0 -2.0 0.0 -1.0,2.0 0.0 -2.0 0.0 0.0,0.0 0.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef11'>
+<feColorMatrix in='ef10' values='-2.0 0.0 2.0 0.0 1.0,-2.0 0.0 2.0 0.0 1.0,-2.0 0.0 2.0 0.0 1.0,0.0 0.0 0.0 0.0 1.0' result='ef11'>
 </feColorMatrix>
 </filter></defs></svg>

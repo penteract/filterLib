@@ -1,8 +1,8 @@
 import math
 import sys
 
-w=4
-h=4
+w=0x100
+h=0x100
 
 header=f"""
 42 4d 36 {hex((w*h*3)//256)[-2:]} 00 00 00 00 00 00 36 00 00 00 28 00
@@ -21,28 +21,22 @@ hdr+=bytes(int(k,16) for k in "01 00  18 00  00 00 00 00".split())
 hdr+=(psz*w*h).to_bytes(4,"little")
 hdr+=bytes(int(k,16) for k in "13 0b 00 00 13 0b 00 00  00 00 00 00 00 00 00 00".split())
 
-
-
 assert len(hdr)==0x36
 
 CENTER=0.58/1.5
 NUMINCENTER=3
 
-
-samples = [0x0,0x1,0x2,0x55,0xfe,0xff]
-
 def g(x,y):
-  return 0xff #samples[x%6]
+  return x
 
 def r(x,y):
-  return 0xfe # samples[y%6]
+  return y
 
 def b(x,y):
-  return x+2*y #samples[ (x//6+2*(y//6) )%6 ]
+  return ((x*16)%256)+ y%16
 
 k=10
-sys.stdout.buffer.write(hdr + bytes(int((g(x,y) if c==1 else r(x,y) if c==2 else b(x,y))) for α in range(h) for β in range(w) for c in range(psz) for (x,y) in [(int(β),int(α))] ))
-                        #[(int(β/k+128-128/k), int(α/k+128- 128/k))] ))
+sys.stdout.buffer.write(hdr + bytes(int((g(x,y) if c==1 else r(x,y) if c==2 else b(x,y))) for α in range(h) for β in range(w) for c in range(psz) for (x,y) in [(int(β/k+128-128/k), int(α/k+128- 128/k))] ))
 
 #[(β,α)]))#
 

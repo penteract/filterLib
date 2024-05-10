@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+svg{
+position:fixed; left:0; top:0; width:0; height:0
+}
+</style>
+
+<style>
+.srt {
+    filter:url("sorted.svg#generated")
+    /*filter: hue-rotate( 180deg ) hue-rotate( 180deg );*/
+}
+.a {
+    filter:url("hue.svg#generated")
+    /*filter: hue-rotate( 180deg ) hue-rotate( 180deg );*/
+}
+
+.a img {
+    /*filter: hue-rotate( 90deg );*/
+}
+/*.b{
+   filter:  hue-rotate( 180deg ) hue-rotate( 90deg );
+}*/
+.z {
+    filter: url("filter.svg#generated");
+}
+.b{
+filter: url("gParts.svg#generated");
+}
+img{
+border:0px;
+padding:0px;
+margin:0px;
+}
+
+</style>
+</head>
+<body>
+<img src="firefox.bmp" />
+<span class=b> <img src="firefox.bmp" /></span>
+<img src="firefox.bmp" class="srt" /><br>
+<img src="firefox2.bmp" />
+<span class=b> <img src="firefox2.bmp" /></span>
+<img src="firefox2.bmp" class="srt" /><br>
+</body>
+</html>

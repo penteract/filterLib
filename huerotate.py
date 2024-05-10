@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 lumr = .213
 lumg=.715
 lumb=.072
@@ -60,16 +61,34 @@ u=np.array([0.,0.,0.,0.,1.])
 
 
 steps = 255
-k = 2550
-add = .9 #(k/steps - 0.1)
-sub = 0.1 #(k/steps)-add
+k = 51*51
+add = 1. #(k/steps - 0.1)
+sub = 0.0 #(k/steps)-add
 
-#Behold the sorting algorithm!
-rDiff = sourceGraphic.matmul([r,k*(r-g)+add,k*(r-b)+add])
-gDiff = sourceGraphic.matmul([g,k*(g-r)-sub,k*(g-b)+add])
-bDiff = sourceGraphic.matmul([b,k*(b-r)-sub,k*(b-g)-sub])
+k=255
+
+rtk=k**0.5
+
+rDiff2 = sourceGraphic.matmul([r,k*(r-g)+u*add,k*(r-b)+u*add])
+gDiff2 = sourceGraphic.matmul([g,k*(g-r)-u*sub,k*(g-b)+u*add])
+bDiff2 = sourceGraphic.matmul([b,k*(b-r)-u*sub,k*(b-g)-u*sub])
+
 
 uu = u*(255/256)
+#Behold the sorting algorithm!
+rDiff1 = sourceGraphic.matmul([r,rtk*(r-g)+u*add/rtk,rtk*(r-b)+u*add/rtk])
+gDiff1 = sourceGraphic.matmul([g,rtk*(g-r)-u*sub,rtk*(g-b)+u*add/rtk])
+bDiff1 = sourceGraphic.matmul([b,rtk*(b-r)-u*sub,rtk*(b-g)-u*sub])
+
+rDiff = rDiff1.matmul([r,rtk*g,rtk*b])
+gDiff = gDiff1.matmul([r,rtk*g,rtk*b])
+bDiff = bDiff1.matmul([r,rtk*g,rtk*b])
+
+#rDiff1 = sourceGraphic.matmul([r,k*(r-g),k*(r-b)])
+#gDiff = sourceGraphic.matmul([g,k*(g-r),k*(g-b)])
+#bDiff = sourceGraphic.matmul([b,k*(b-r),k*(b-g)-u*sub])
+
+
 # these vectors look like [max or 0, 0 or mid or 1, min or 0]
 # sometimes off by 3/256 and I'm not sure why.
 half = 0.5 #129/255
@@ -80,13 +99,15 @@ rParts,gParts,bParts = [x.matmul([r+g+b-2*u, r-g-b+u,r-b-g , u]) for x in [rDiff
 maxmidmin = (rParts*half + gParts*half) + bParts*half # mid is in the interval [0.5,1]
 #end of sorting algorithm
 
+#rParts = rDiff.matmul([0*u,0*u,0*u,u])
+
 #gParts=rParts
 #We want (mid - min) / (max-min)
-numer = 2*((g-.5)-b)
+numer = 2*((g-half*u)-b)
 denom = 2*(r-b)
 three = 3
-d1 = maxmidmin.matmul([numer, 0*u, 0*u] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
-#d1 = maxmidmin.matmul([numer, (numer+denom)/three, (2*denom-numer)/three] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
+d1 = maxmidmin.matmul([numer, denom+0*u, 0*u] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
+#d1 = maxmidmin.matmul([numer, (numer+denom)/three, (2*denom-numer)/three] + [u]) # h,(h+1)/3, (2-h)/3 (2-a/b = (2b-a)/b)
 
 
     #divideBlend(d1, div)
@@ -95,7 +116,7 @@ h = BlendEffect("color-dodge", div, d1)
 
 lum = (r+g+b)/3
 
-#lumMat = np.array([(r+g+b)/3,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
+lumMat = np.array([(r+g+b)/3,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
 #print(maxmidmin.matmul([2*r,2*(g)-u,2*b]).mkSVG())
 #print(gParts.mkSVG())
 maxmidminPretty = maxmidmin.matmul([r/half,(g-u*half)/half,b/half])
@@ -110,8 +131,45 @@ maxmidminPretty = maxmidmin.matmul([r/half,(g-u*half)/half,b/half])
 
 lumParts = sourceGraphic.matmul([lum,(3*lum)/three,(3*lum)/three,u])
 
+invLum = np.linalg.inv(lumMat[:3,:3])
+
+np.concatenate((invLum,
+    np.transpose( [ [0,0,0], - np.matmul(invLum, lumMat[:3,4])]) ),
+    axis=1)
+#np.reshape([subb,[0,0,0]],(3,2))
+
+import math
+
+def kprev(n,k):
+    for i in range(k):
+        n=math.nextafter(n,0)
+    return n
+
+#u*((255.0 + 1/255 - 0.5)/255)
+#rDiff2 = sourceGraphic.matmul([r* ((0x90+1) /256 - 1*2**(-23)), #(128.496 - 0/257 + 0* (2**-25))/255,
+#                               b*((0x90+1)/256) ,
+#                               u*(0x01 - 1/255)/255,a])
 
 
+# matrix entries other than bias get rounded to nearest 1/128
+#r* ((0x90+1) /256 - 1*2**(-23)),
+#b*((0x90+1)/256) ,
+
+
+
+                               #kprev((128.0 - 1/257 + 0* (2**-25))/255 ,0),a])
+
+# smallest value in 5th matrix column which gives color component 0xff (to within 2**-24)
+#for webRender: 255.5/256 (boundary within 2**-24)
+#for integer path: (255 - 1/256)/255 (boundary within (2**-28))
+# smallest value which gives color component 0x1
+# for integer path: (0x01 - 1.0/256)/255 (boundary within 2**-24)
+# for webRender: (0.5 + 0.625/256)/256 (boundary within 2**-24)
+
+
+                              # ((255.0 + .4/255 - 0.5)/255),a])
+#k = rDiff2.matrix[1][2]
+#print(k,k*255+0.5,file=sys.stderr)
 
 if __name__ == "__main__":
     import sys
