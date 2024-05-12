@@ -1,8 +1,8 @@
 import math
 import sys
 
-w=4
-h=4
+w=256
+h=256
 
 header=f"""
 42 4d 36 {hex((w*h*3)//256)[-2:]} 00 00 00 00 00 00 36 00 00 00 28 00
@@ -32,13 +32,13 @@ NUMINCENTER=3
 samples = [0x0,0x1,0x2,0x55,0xfe,0xff]
 
 def g(x,y):
-  return 0xff #samples[x%6]
+  return x #samples[x%6]
 
 def r(x,y):
-  return 0xfe # samples[y%6]
+  return y # samples[y%6]
 
 def b(x,y):
-  return x+2*y #samples[ (x//6+2*(y//6) )%6 ]
+  return 0 #x+2*y #samples[ (x//6+2*(y//6) )%6 ]
 
 k=10
 sys.stdout.buffer.write(hdr + bytes(int((g(x,y) if c==1 else r(x,y) if c==2 else b(x,y))) for α in range(h) for β in range(w) for c in range(psz) for (x,y) in [(int(β),int(α))] ))

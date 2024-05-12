@@ -1,8 +1,58 @@
 <svg xmlns='http://www.w3.org/2000/svg'><defs><filter id='generated' color-interpolation-filters='sRGB' x='0%' y='0%' width='100%' height='100%'>
-<feColorMatrix in='SourceGraphic' values='1.0 0.0 0.0 0.0 0.0,15.968719422671311 -15.968719422671311 0.0 0.0 0.06262242910851495,15.968719422671311 0.0 -15.968719422671311 0.0 0.06262242910851495,0 0 0 1 0' result='ef0'>
+<feColorMatrix in='SourceGraphic' values='-0.16666666666666666 -0.16666666666666666 -0.16666666666666666 0.0 0.5,0.5 -0.25 -0.25 0.0 0.5,0.0 0.5 -0.5 0.0 0.5,0.0 0.0 0.0 0.0 1.0' result='ef0'>
 </feColorMatrix>
-<feColorMatrix in='ef0' values='1.0 0.0 0.0 0.0 0.0,0.0 15.968719422671311 0.0 0.0 0.0,0.0 0.0 15.968719422671311 0.0 0.0,0 0 0 1 0' result='ef1'>
+<feColorMatrix in='SourceGraphic' values='0.3333333333333333 0.3333333333333333 0.3333333333333333 0.0 0.0,0.3333333333333333 0.3333333333333333 0.3333333333333333 0.0 0.0,0.3333333333333333 0.3333333333333333 0.3333333333333333 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef1'>
 </feColorMatrix>
-<feColorMatrix in='ef1' values='1.0 1.0 1.0 0.0 -2.0,1.0 -1.0 -1.0 0.0 1.0,1.0 -1.0 -1.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef2'>
+<feColorMatrix in='SourceGraphic' values='1.0 0.0 0.0 0.0 0.0,255.0 -255.0 0.0 0.0 1.0,255.0 0.0 -255.0 0.0 1.0,0 0 0 1 0' result='ef2'>
 </feColorMatrix>
+<feColorMatrix in='ef2' values='1.0 1.0 1.0 0.0 -2.0,1.0 -1.0 -1.0 0.0 1.0,1.0 -1.0 -1.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef3'>
+</feColorMatrix>
+<feColorMatrix in='SourceGraphic' values='0.0 1.0 0.0 0.0 0.0,-255.0 255.0 0.0 0.0 0.0,0.0 255.0 -255.0 0.0 1.0,0 0 0 1 0' result='ef4'>
+</feColorMatrix>
+<feColorMatrix in='ef4' values='1.0 1.0 1.0 0.0 -2.0,1.0 -1.0 -1.0 0.0 1.0,1.0 -1.0 -1.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef5'>
+</feColorMatrix>
+<feComposite in='ef3' in2='ef5' operator='arithmetic' k1='0.0' k2='0.5' k3='0.5' k4='0.0' result='ef6'>
+</feComposite>
+<feColorMatrix in='SourceGraphic' values='0.0 0.0 1.0 0.0 0.0,-255.0 0.0 255.0 0.0 0.0,0.0 -255.0 255.0 0.0 0.0,0 0 0 1 0' result='ef7'>
+</feColorMatrix>
+<feColorMatrix in='ef7' values='1.0 1.0 1.0 0.0 -2.0,1.0 -1.0 -1.0 0.0 1.0,1.0 -1.0 -1.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef8'>
+</feColorMatrix>
+<feComposite in='ef6' in2='ef8' operator='arithmetic' k1='0.0' k2='1.0' k3='0.5' k4='0.0' result='ef9'>
+</feComposite>
+<feColorMatrix in='ef9' values='0.0 0.0 0.0 0.0 1.0,-2.0 0.0 2.0 0.0 1.0,-2.0 0.0 2.0 0.0 1.0,0.0 0.0 0.0 0.0 1.0' result='ef10'>
+</feColorMatrix>
+<feColorMatrix in='ef9' values='0.0 0.0 0.0 0.0 0.5,0.6666666666666666 0.6666666666666666 -1.3333333333333333 0.0 -0.3333333333333333,1.3333333333333333 -0.6666666666666666 -0.6666666666666666 0.0 0.3333333333333333,0.0 0.0 0.0 0.0 1.0' result='ef11'>
+</feColorMatrix>
+<feBlend in='ef10' in2='ef11' mode='color-dodge' result='ef12'>
+</feBlend>
+<feComposite in='ef12' in2='ef1' operator='arithmetic' k1='0.0' k2='255.0' k3='-255.0' k4='1.0' result='ef13'>
+</feComposite>
+<feBlend in='ef1' in2='ef13' mode='exclusion' result='ef14'>
+</feBlend>
+<feColorMatrix in='ef14' values='0.0 0.0 0.0 0.0 1.0,0.0 0.0 0.5 0.0 0.0,0.0 1.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef15'>
+</feColorMatrix>
+<feBlend in='ef12' in2='ef13' mode='exclusion' result='ef16'>
+</feBlend>
+<feColorMatrix in='ef16' values='1.0 0.0 0.0 0.0 0.0,0.0 1.0 0.0 0.0 0.0,0.0 0.0 1.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef17'>
+</feColorMatrix>
+<feComposite in='ef15' in2='ef17' operator='arithmetic' k1='1.0' k2='0.0' k3='0.0' k4='0.0' result='ef18'>
+</feComposite>
+<feColorMatrix in='ef18' values='0.0 0.0 0.0 0.0 0.0,0.0 0.0 -1.0 0.0 1.0,0.0 0.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef19'>
+</feColorMatrix>
+<feBlend in='ef19' in2='ef18' mode='color-dodge' result='ef20'>
+</feBlend>
+<feColorMatrix in='ef20' values='0.0 0.0 0.0 0.0 0.5,0.0 1.0 0.0 0.0 0.0,0.0 1.0 0.0 0.0 0.0,0.0 0.0 0.0 0.0 1.0' result='ef21'>
+</feColorMatrix>
+<feComponentTransfer in='ef21' result='ef22'>
+<feFuncR type='linear' slope='-1.0' intercept='1.0' />
+<feFuncG type='linear' slope='-1.0' intercept='1.0' />
+<feFuncB type='linear' slope='-1.0' intercept='1.0' />
+<feFuncA type='identity' />
+</feComponentTransfer>
+<feColorMatrix in='SourceGraphic' values='0.0 0.0 0.0 0.0 0.25,0.0 0.0 0.0 0.0 0.25,0.0 0.0 0.0 0.0 0.25,0 0 0 1 0' result='ef23'>
+</feColorMatrix>
+<feBlend in='ef22' in2='ef23' mode='color-dodge' result='ef24'>
+</feBlend>
+<feComposite in='ef0' in2='ef24' operator='arithmetic' k1='2.0' k2='0.0' k3='-1.0' k4='0.5' result='ef25'>
+</feComposite>
 </filter></defs></svg>

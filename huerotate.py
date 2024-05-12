@@ -69,13 +69,14 @@ k=255
 
 rtk=k**0.5
 
-rDiff2 = sourceGraphic.matmul([r,k*(r-g)+u*add,k*(r-b)+u*add])
-gDiff2 = sourceGraphic.matmul([g,k*(g-r)-u*sub,k*(g-b)+u*add])
-bDiff2 = sourceGraphic.matmul([b,k*(b-r)-u*sub,k*(b-g)-u*sub])
+rDiff = sourceGraphic.matmul([r,k*(r-g)+u*add,k*(r-b)+u*add])
+gDiff = sourceGraphic.matmul([g,k*(g-r)-u*sub,k*(g-b)+u*add])
+bDiff = sourceGraphic.matmul([b,k*(b-r)-u*sub,k*(b-g)-u*sub])
 
 
 uu = u*(255/256)
 #Behold the sorting algorithm!
+"""
 rDiff1 = sourceGraphic.matmul([r,rtk*(r-g)+u*add/rtk,rtk*(r-b)+u*add/rtk])
 gDiff1 = sourceGraphic.matmul([g,rtk*(g-r)-u*sub,rtk*(g-b)+u*add/rtk])
 bDiff1 = sourceGraphic.matmul([b,rtk*(b-r)-u*sub,rtk*(b-g)-u*sub])
@@ -83,7 +84,7 @@ bDiff1 = sourceGraphic.matmul([b,rtk*(b-r)-u*sub,rtk*(b-g)-u*sub])
 rDiff = rDiff1.matmul([r,rtk*g,rtk*b])
 gDiff = gDiff1.matmul([r,rtk*g,rtk*b])
 bDiff = bDiff1.matmul([r,rtk*g,rtk*b])
-
+"""
 #rDiff1 = sourceGraphic.matmul([r,k*(r-g),k*(r-b)])
 #gDiff = sourceGraphic.matmul([g,k*(g-r),k*(g-b)])
 #bDiff = sourceGraphic.matmul([b,k*(b-r),k*(b-g)-u*sub])
@@ -106,17 +107,22 @@ maxmidmin = (rParts*half + gParts*half) + bParts*half # mid is in the interval [
 numer = 2*((g-half*u)-b)
 denom = 2*(r-b)
 three = 3
-d1 = maxmidmin.matmul([numer, denom+0*u, 0*u] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
-#d1 = maxmidmin.matmul([numer, (numer+denom)/three, (2*denom-numer)/three] + [u]) # h,(h+1)/3, (2-h)/3 (2-a/b = (2b-a)/b)
+#d1 = maxmidmin.matmul([numer, denom+0*u, 0*u] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
+d1 = maxmidmin.matmul([numer, (numer+denom)/three, (2*denom-numer)/three] + [u]) # h,(h+1)/3, (2-h)/3 (2-a/b = (2b-a)/b)
 
 
     #divideBlend(d1, div)
 div = maxmidmin.matmul([u-denom,u-denom,u-denom] + [u])
 h = BlendEffect("color-dodge", div, d1)
 
+d12 = maxmidmin.matmul([u*0.5, (numer+denom)/three, (2*denom-numer)/three] + [u])
+div2 = maxmidmin.matmul([u,u-denom,u-denom] + [u])
+uh12h = BlendEffect("color-dodge", div2, d12)
+
 lum = (r+g+b)/3
 
 lumMat = np.array([(r+g+b)/3,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
+
 #print(maxmidmin.matmul([2*r,2*(g)-u,2*b]).mkSVG())
 #print(gParts.mkSVG())
 maxmidminPretty = maxmidmin.matmul([r/half,(g-u*half)/half,b/half])
@@ -129,14 +135,61 @@ maxmidminPretty = maxmidmin.matmul([r/half,(g-u*half)/half,b/half])
 # (1-l)/l if h+1>3l>2-h
 # l/(1-l) if 2-h>3l>h+1
 
+#alternative:
+# a,b <- (l>((h+1)/3) `excl` (((h+1)/3), l)) * (l>((2-h)/3) `excl` (l , (2-h)/3) )
+# a/b
+
+
+
 lumParts = sourceGraphic.matmul([lum,(3*lum)/three,(3*lum)/three,u])
 
 invLum = np.linalg.inv(lumMat[:3,:3])
 
-np.concatenate((invLum,
+invLum = np.concatenate((invLum,
     np.transpose( [ [0,0,0], - np.matmul(invLum, lumMat[:3,4])]) ),
     axis=1)
 #np.reshape([subb,[0,0,0]],(3,2))
+
+
+
+#c1c2 = BlendEffect("difference", lumParts,uh12h).matmul([255*r-u,255*g-u,255*b-u,u])
+c1c2 =  (uh12h - lumParts)*255 + 1.0
+
+# (l>((h+1)/3) `excl` l) ,  (l>((2-h)/3) `excl` l)
+lumexcls = BlendEffect("exclusion",lumParts,c1c2).matmul([u,b*0.5,g,u])
+hexcls = BlendEffect("exclusion",uh12h,c1c2).matmul([r,g,b,u])
+udividenddivisor = lumexcls*hexcls
+divisor = udividenddivisor.matmul([u*0,u-b,u*0,u])
+
+satscale = BlendEffect("color-dodge",  divisor, udividenddivisor).matmul([u*0.5,g,g,u])
+
+
+lumMatI = np.array([(u-(r+g+b)/3)*0.5,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
+
+lumSpaceI = sourceGraphic.matmul(lumMatI)
+
+satscale = divideBlend(sourceGraphic.matmul([u*0.25,u*0.25,u*0.25]),satscale)
+
+k = lumSpaceI*satscale*2 - 1*satscale + 0.5
+
+lumMat2 = np.array([((r+g+b)/3)*.5,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
+
+invLum2 = np.linalg.inv(lumMat2[:3,:3])
+
+invLum2 = np.concatenate((invLum2,
+    np.transpose( [ [0,0,0], - np.matmul(invLum2, lumMat2[:3,4])]) ),
+    axis=1)
+
+#invLum2 = np.concatenate((invLum[:3,:3]*2,
+     #                     invLum[:,3:]),
+    #np.transpose( [ [0,0,0], - np.matmul(invLum, lumMat[:3,4])]) ),
+    #axis=1)
+
+result = (k).matmul(invLum2)
+
+
+
+#c1c2.matmul([0*u,g])
 
 import math
 
