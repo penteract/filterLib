@@ -47,7 +47,7 @@ class Effect():
         if self.ref is not None:
             self.ref=None
             for k in self.inputs:
-                k.resetRef
+                k.resetRef()
     def matmul(self,matrix):
         """multiply each pixel's RGBA vector by a matrix (extended to be 4 by 5)"""
         return MatrixEffect(matrix,self)
@@ -76,8 +76,6 @@ class Effect():
         """apply self to other (replace sourceGraphic with other inside self) """
         abstract
     def _start_compose(self,other):
-        if self.ref is not None:
-            return self.ref
         if self.rendering:
             raise Exception("Loop of effect dependencies")
         self.rendering=True
@@ -146,6 +144,8 @@ class MatrixEffect(Effect):
         #self.params["type"]="matrix" this is the initial value
         self.params["values"]=matToValues(self.matrix)
     def compose(self,other,top=True):
+        if self.ref is not None:
+            return self.ref
         inps = self._start_compose(other)
         return self._end_compose(top,MatrixEffect(self.matrix,*inps))
 
@@ -218,20 +218,22 @@ class ExpressionEffect(Effect):
                 return ExpressionEffect(k2*o2, k2*o4, k4*o2, k4*o4, self.inputs[0], other.inputs[0])
             elif other.inputs[1] is None:
                 (o1,o2,o3,o4) = other.ks
-                return ExpressionEffect(o2, o4, o2, o4, self, other.inputs[0])
+                return ExpressionEffect(o2, o4, 0.0, 0.0, self, other.inputs[0])
         if isinstance(other,Effect):
             if self.inputs[1] is None:
                 (k1,k2,k3,k4) = self.ks
-                return ExpressionEffect(k2, k2, k4, k4, self.inputs[0], other)
+                return ExpressionEffect(k2, 0.0, k4, 0.0, self.inputs[0], other)
             else:
                 return ExpressionEffect(1.0, 0.0, 0.0, 0.0, self, other)
         else:
             return NotImplemented
     def __str__(self):
         return f"<{self.__class__.__name__}({','.join(str(x) for x in self.inputs)})>"
-    def compose(self,*args,**kwargs):
+    def compose(self,other,top=True):
+        if self.ref is not None:
+            return self.ref
         if self.inputs[1] is None:
-            return self.inner.compose(*args,**kwargs)
+            return self.inner.compose(other,top=top)
         else:
             inps = self._start_compose(other)
             return self._end_compose(top,ExpressionEffect(*self.ks,*inps))
@@ -251,6 +253,8 @@ class ComponentEffect(Effect):
         for channel,component in zip("RGBA",components):
             self.addInner(f"<feFunc{channel} {component} />")
     def compose(self,other,top=True):
+        if self.ref is not None:
+            return self.ref
         inps = self._start_compose(other)
         return self._end_compose(top,ComponentEffect(*inps,*self.components))
 
@@ -320,7 +324,9 @@ class BlendEffect(Effect):
         super().__init__("feBlend")
         self.inputs=[in1,in2]
         self.params["mode"]=mode
-    def compose(self,other):
+    def compose(self,other,top=True):
+        if self.ref is not None:
+            return self.ref
         inps = self._start_compose(other)
         return self._end_compose(top,BlendEffect(self.params["mode"],*inps))
 
