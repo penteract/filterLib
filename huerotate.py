@@ -60,14 +60,11 @@ a=np.array([0.,0.,0.,1.,0.])
 u=np.array([0.,0.,0.,0.,1.])
 
 
-steps = 255
-k = 51*51
-add = 1. #(k/steps - 0.1)
-sub = 0.0 #(k/steps)-add
+add = 1.
+sub = 0.0
 
-k=255
+k=2550 # In Firefox, this effectively gets clamped to 255 (although this doesn't cause a problem). In chromium, this needs to be larger than 255 (I assume some things aren't being discretized to sRGB bytes)
 
-rtk=k**0.5
 
 rDiff = sourceGraphic.matmul([r,k*(r-g)+u*add,k*(r-b)+u*add])
 gDiff = sourceGraphic.matmul([g,k*(g-r)-u*sub,k*(g-b)+u*add])
@@ -76,55 +73,33 @@ bDiff = sourceGraphic.matmul([b,k*(b-r)-u*sub,k*(b-g)-u*sub])
 
 uu = u*(255/256)
 #Behold the sorting algorithm!
-"""
-rDiff1 = sourceGraphic.matmul([r,rtk*(r-g)+u*add/rtk,rtk*(r-b)+u*add/rtk])
-gDiff1 = sourceGraphic.matmul([g,rtk*(g-r)-u*sub,rtk*(g-b)+u*add/rtk])
-bDiff1 = sourceGraphic.matmul([b,rtk*(b-r)-u*sub,rtk*(b-g)-u*sub])
-
-rDiff = rDiff1.matmul([r,rtk*g,rtk*b])
-gDiff = gDiff1.matmul([r,rtk*g,rtk*b])
-bDiff = bDiff1.matmul([r,rtk*g,rtk*b])
-"""
-#rDiff1 = sourceGraphic.matmul([r,k*(r-g),k*(r-b)])
-#gDiff = sourceGraphic.matmul([g,k*(g-r),k*(g-b)])
-#bDiff = sourceGraphic.matmul([b,k*(b-r),k*(b-g)-u*sub])
-
 
 # these vectors look like [max or 0, 0 or mid or 1, min or 0]
-# sometimes off by 3/256 and I'm not sure why.
-half = 0.5 #129/255
-
-#diffToParts =
+half = 0.5
 
 rParts,gParts,bParts = [x.matmul([r+g+b-2*u, r-g-b+u,r-b-g , u]) for x in [rDiff,gDiff,bDiff]]
-maxmidmin = (rParts*half + gParts*half) + bParts*half # mid is in the interval [0.5,1]
+maxmidmin = (rParts*half + gParts*half) + bParts*half # mid is in the interval [0.5,1], the others are in [0,0.5]
 #end of sorting algorithm
 
-#rParts = rDiff.matmul([0*u,0*u,0*u,u])
 
-#gParts=rParts
 #We want (mid - min) / (max-min)
 numer = 2*((g-half*u)-b)
 denom = 2*(r-b)
 three = 3
-#d1 = maxmidmin.matmul([numer, denom+0*u, 0*u] + [u]) # h,(h+1)/2, (2-h)/2 (2-a/b = (2b-a)/b)
-d1 = maxmidmin.matmul([numer, (numer+denom)/three, (2*denom-numer)/three] + [u]) # h,(h+1)/3, (2-h)/3 (2-a/b = (2b-a)/b)
 
-
-    #divideBlend(d1, div)
+# h,(h+1)/3, (2-h)/3 (2-a/b = (2b-a)/b)
+d1 = maxmidmin.matmul([numer, (numer+denom)/three, (2*denom-numer)/three] + [u])
 div = maxmidmin.matmul([u-denom,u-denom,u-denom] + [u])
 h = BlendEffect("color-dodge", div, d1)
 
-d12 = maxmidmin.matmul([u*0.5, (numer+denom)/three, (2*denom-numer)/three] + [u])
-div2 = maxmidmin.matmul([u,u-denom,u-denom] + [u])
+#,(h+1)/3, (2-h)/3 (2-a/b = (2b-a)/b)
+d12 = maxmidmin.matmul([u, (numer+denom)/three, (2*denom-numer)/three] + [u])
+div2 = maxmidmin.matmul([u*0,u-denom,u-denom] + [u])
 uh12h = BlendEffect("color-dodge", div2, d12)
 
 lum = (r+g+b)/3
 
-lumMat = np.array([(r+g+b)/3,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
 
-#print(maxmidmin.matmul([2*r,2*(g)-u,2*b]).mkSVG())
-#print(gParts.mkSVG())
 maxmidminPretty = maxmidmin.matmul([r/half,(g-u*half)/half,b/half])
 
 # There are a few options for how to do the next bit.
@@ -143,36 +118,27 @@ maxmidminPretty = maxmidmin.matmul([r/half,(g-u*half)/half,b/half])
 
 lumParts = sourceGraphic.matmul([lum,(3*lum)/three,(3*lum)/three,u])
 
-invLum = np.linalg.inv(lumMat[:3,:3])
-
-invLum = np.concatenate((invLum,
-    np.transpose( [ [0,0,0], - np.matmul(invLum, lumMat[:3,4])]) ),
-    axis=1)
-#np.reshape([subb,[0,0,0]],(3,2))
-
-
-
-#c1c2 = BlendEffect("difference", lumParts,uh12h).matmul([255*r-u,255*g-u,255*b-u,u])
 c1c2 =  (uh12h - lumParts)*255 + 1.0
 
 # (l>((h+1)/3) `excl` l) ,  (l>((2-h)/3) `excl` l)
-lumexcls = BlendEffect("exclusion",lumParts,c1c2).matmul([u,b*0.5,g,u])
-hexcls = BlendEffect("exclusion",uh12h,c1c2).matmul([r,g,b,u])
+lumexcls = BlendEffect("exclusion",lumParts,c1c2).matmul([u,b,g*0.5,u])
+hexcls = BlendEffect("exclusion",uh12h,c1c2)
 udividenddivisor = lumexcls*hexcls
-divisor = udividenddivisor.matmul([u*0,u-b,u*0,u])
+divisor = udividenddivisor.matmul([u*0,u*0,u-g,u])
 
-satscale = BlendEffect("color-dodge",  divisor, udividenddivisor).matmul([u*0.5,g,g,u])
+satscale = BlendEffect("color-dodge",  divisor, udividenddivisor).matmul([u*0.5,b,b,u])
 
 
-lumMatI = np.array([(u-(r+g+b)/3)*0.5,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
+#An orthogonal transformation sending setting the color cube to stand on the black corner,
+# sending the white-black axis to (0.0,0.5,0.5) - (1.0,0.5,0.5)
+lumMat = np.array([(r+g+b)/3,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
+
+lumMatI = np.array([(u-(r+g+b)/3),(2*r-g-b+2*u)/4,(g-b+u)/2,u])
 
 lumSpaceI = sourceGraphic.matmul(lumMatI)
-
-satscale = divideBlend(sourceGraphic.matmul([u*0.25,u*0.25,u*0.25]),satscale)
-
 k = lumSpaceI*satscale*2 - 1*satscale + 0.5
 
-lumMat2 = np.array([((r+g+b)/3)*.5,(2*r-g-b+2*u)/4,(g-b+u)/2,u])
+lumMat2 = np.array([((r+g+b)/3),(2*r-g-b+2*u)/4,(g-b+u)/2,u])
 
 invLum2 = np.linalg.inv(lumMat2[:3,:3])
 
@@ -180,16 +146,9 @@ invLum2 = np.concatenate((invLum2,
     np.transpose( [ [0,0,0], - np.matmul(invLum2, lumMat2[:3,4])]) ),
     axis=1)
 
-#invLum2 = np.concatenate((invLum[:3,:3]*2,
-     #                     invLum[:,3:]),
-    #np.transpose( [ [0,0,0], - np.matmul(invLum, lumMat[:3,4])]) ),
-    #axis=1)
 
 result = (k).matmul(invLum2)
 
-
-
-#c1c2.matmul([0*u,g])
 
 import math
 
@@ -227,7 +186,7 @@ def kprev(n,k):
 if __name__ == "__main__":
     import sys
     if len(sys.argv)==2:
-        print(eval(sys.argv[1]).mkSVG())
+        print(eval(sys.argv[1]).mkSVG(**{"color-interpolation-filters":"sRGB"}) )
     else:
         print("Usage(testing): python3 huerotate.py 'expr'\n    expr describes a filter\nOutputs an svg with the filter having id='generated'",file=sys.stderr)
 
